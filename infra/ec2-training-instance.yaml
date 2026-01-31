@@ -1,0 +1,295 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'EC2 GPU Instance for TransUNet Pancreas Segmentation Training'
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+
+  InstanceType:
+    Description: EC2 instance type for training
+    Type: String
+    Default: g4dn.xlarge
+    AllowedValues:
+      - g4dn.xlarge      # 1x T4 (16GB), 4 vCPU, 16GB RAM - ~$0.526/hr
+      - g4dn.2xlarge     # 1x T4 (16GB), 8 vCPU, 32GB RAM - ~$0.752/hr
+      - g4dn.4xlarge     # 1x T4 (16GB), 16 vCPU, 64GB RAM - ~$1.204/hr
+      - g5.xlarge        # 1x A10G (24GB), 4 vCPU, 16GB RAM - ~$1.006/hr
+      - g5.2xlarge       # 1x A10G (24GB), 8 vCPU, 32GB RAM - ~$1.212/hr
+      - p3.2xlarge       # 1x V100 (16GB), 8 vCPU, 61GB RAM - ~$3.06/hr
+    ConstraintDescription: Must be a valid GPU instance type.
+
+  VolumeSize:
+    Description: Size of EBS volume in GB
+    Type: Number
+    Default: 100
+    MinValue: 50
+    MaxValue: 500
+
+  AllowedSSHCidr:
+    Description: CIDR block allowed to SSH (use your IP for security)
+    Type: String
+    Default: 0.0.0.0/0
+    AllowedPattern: ^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$
+
+  UseSpotInstance:
+    Description: Use Spot Instance for cost savings (may be interrupted)
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+  SpotMaxPrice:
+    Description: Maximum hourly price for Spot Instance (leave empty for on-demand price)
+    Type: String
+    Default: ''
+
+Conditions:
+  UseSpot: !Equals [!Ref UseSpotInstance, 'true']
+  HasSpotPrice: !Not [!Equals [!Ref SpotMaxPrice, '']]
+
+Mappings:
+  RegionAMI:
+    # Deep Learning AMI GPU PyTorch 2.1 (Ubuntu 20.04)
+    us-east-1:
+      AMI: ami-0a0c8eebcdd6dcbd0
+    us-east-2:
+      AMI: ami-0e8a3347e6c6d13f4
+    us-west-1:
+      AMI: ami-0487b1fe60c1fd1a2
+    us-west-2:
+      AMI: ami-0a7de327e948fbcac
+    eu-west-1:
+      AMI: ami-0d3a2960fcac852bc
+    eu-central-1:
+      AMI: ami-0b7fd829e7758b06d
+    ap-northeast-1:
+      AMI: ami-0c6d747b5b8a8e0d7
+    ap-southeast-1:
+      AMI: ami-0c802847a7dd848c0
+    ap-southeast-2:
+      AMI: ami-0310a9b5e8b2d0e8c
+
+Resources:
+  # Security Group
+  TrainingSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for TransUNet training instance
+      GroupName: !Sub '${AWS::StackName}-sg'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref AllowedSSHCidr
+          Description: SSH access
+        - IpProtocol: tcp
+          FromPort: 8888
+          ToPort: 8888
+          CidrIp: !Ref AllowedSSHCidr
+          Description: Jupyter Notebook
+        - IpProtocol: tcp
+          FromPort: 6006
+          ToPort: 6006
+          CidrIp: !Ref AllowedSSHCidr
+          Description: TensorBoard
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-sg'
+
+  # IAM Role for EC2 (S3 access for data/checkpoints)
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AWS::StackName}-ec2-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-role'
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub '${AWS::StackName}-profile'
+      Roles:
+        - !Ref EC2Role
+
+  # EC2 Instance (On-Demand)
+  TrainingInstance:
+    Type: AWS::EC2::Instance
+    Condition: !Not [Condition: UseSpot]
+    Properties:
+      ImageId: !FindInMap [RegionAMI, !Ref 'AWS::Region', AMI]
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroupIds:
+        - !GetAtt TrainingSecurityGroup.GroupId
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !Ref VolumeSize
+            VolumeType: gp3
+            Iops: 3000
+            Throughput: 125
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          
+          # Log output
+          exec > >(tee /var/log/user-data.log) 2>&1
+          
+          echo "=== Starting setup ==="
+          
+          # Update system
+          apt-get update -y
+          
+          # Clone repository
+          cd /home/ubuntu
+          git clone https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation.git
+          chown -R ubuntu:ubuntu TransUNet-Pancreas-Segmentation
+          
+          # Create setup script for user
+          cat > /home/ubuntu/setup_training.sh << 'EOF'
+          #!/bin/bash
+          cd /home/ubuntu/TransUNet-Pancreas-Segmentation
+          
+          # Activate conda environment (Deep Learning AMI)
+          source /opt/conda/bin/activate pytorch
+          
+          # Install additional dependencies
+          pip install monai nibabel tqdm matplotlib scipy
+          
+          # Download dataset
+          echo "Downloading dataset..."
+          python scripts/download_dataset.py
+          
+          echo "Setup complete! Ready for training."
+          echo "To start training:"
+          echo "  cd /home/ubuntu/TransUNet-Pancreas-Segmentation"
+          echo "  source /opt/conda/bin/activate pytorch"
+          echo "  jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser"
+          EOF
+          
+          chmod +x /home/ubuntu/setup_training.sh
+          chown ubuntu:ubuntu /home/ubuntu/setup_training.sh
+          
+          echo "=== Setup complete ==="
+          echo "Run: /home/ubuntu/setup_training.sh"
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-instance'
+        - Key: Project
+          Value: TransUNet-Pancreas-Segmentation
+
+  # Spot Instance Launch Template
+  SpotLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Condition: UseSpot
+    Properties:
+      LaunchTemplateName: !Sub '${AWS::StackName}-spot-template'
+      LaunchTemplateData:
+        ImageId: !FindInMap [RegionAMI, !Ref 'AWS::Region', AMI]
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyName
+        IamInstanceProfile:
+          Arn: !GetAtt EC2InstanceProfile.Arn
+        SecurityGroupIds:
+          - !GetAtt TrainingSecurityGroup.GroupId
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              VolumeSize: !Ref VolumeSize
+              VolumeType: gp3
+              DeleteOnTermination: true
+        InstanceMarketOptions:
+          MarketType: spot
+          SpotOptions:
+            SpotInstanceType: one-time
+            InstanceInterruptionBehavior: terminate
+            MaxPrice: !If [HasSpotPrice, !Ref SpotMaxPrice, !Ref 'AWS::NoValue']
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            set -e
+            exec > >(tee /var/log/user-data.log) 2>&1
+            
+            apt-get update -y
+            cd /home/ubuntu
+            git clone https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation.git
+            chown -R ubuntu:ubuntu TransUNet-Pancreas-Segmentation
+            
+            cat > /home/ubuntu/setup_training.sh << 'EOF'
+            #!/bin/bash
+            cd /home/ubuntu/TransUNet-Pancreas-Segmentation
+            source /opt/conda/bin/activate pytorch
+            pip install monai nibabel tqdm matplotlib scipy
+            python scripts/download_dataset.py
+            echo "Setup complete!"
+            EOF
+            
+            chmod +x /home/ubuntu/setup_training.sh
+            chown ubuntu:ubuntu /home/ubuntu/setup_training.sh
+
+  SpotInstance:
+    Type: AWS::EC2::Instance
+    Condition: UseSpot
+    Properties:
+      LaunchTemplate:
+        LaunchTemplateId: !Ref SpotLaunchTemplate
+        Version: !GetAtt SpotLaunchTemplate.LatestVersionNumber
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-spot-instance'
+        - Key: Project
+          Value: TransUNet-Pancreas-Segmentation
+
+Outputs:
+  InstanceId:
+    Description: Instance ID
+    Value: !If [UseSpot, !Ref SpotInstance, !Ref TrainingInstance]
+    Export:
+      Name: !Sub '${AWS::StackName}-InstanceId'
+
+  PublicIP:
+    Description: Public IP address
+    Value: !If [UseSpot, !GetAtt SpotInstance.PublicIp, !GetAtt TrainingInstance.PublicIp]
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicIP'
+
+  PublicDNS:
+    Description: Public DNS name
+    Value: !If [UseSpot, !GetAtt SpotInstance.PublicDnsName, !GetAtt TrainingInstance.PublicDnsName]
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicDNS'
+
+  SSHCommand:
+    Description: SSH command to connect
+    Value: !Sub 
+      - 'ssh -i ${KeyName}.pem ubuntu@${IP}'
+      - IP: !If [UseSpot, !GetAtt SpotInstance.PublicIp, !GetAtt TrainingInstance.PublicIp]
+
+  JupyterURL:
+    Description: Jupyter Notebook URL (after starting)
+    Value: !Sub 
+      - 'http://${IP}:8888'
+      - IP: !If [UseSpot, !GetAtt SpotInstance.PublicIp, !GetAtt TrainingInstance.PublicIp]
+
+  SetupInstructions:
+    Description: Setup instructions after SSH
+    Value: |
+      1. SSH to instance
+      2. Run: /home/ubuntu/setup_training.sh
+      3. Start training with Jupyter or command line
