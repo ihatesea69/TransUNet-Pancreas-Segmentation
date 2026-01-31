@@ -1,0 +1,541 @@
+% ============================================================================
+% GRADUATION PROJECT PROPOSAL
+% TransUNet for Automated Pancreas Segmentation from CT Scans
+% Compile: pdflatex proposal.tex (run 2-3 times for ToC and References)
+% ============================================================================
+
+\documentclass[12pt,a4paper]{article}
+
+% Packages
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{enumitem}
+
+% Line spacing
+\linespread{1.3}
+
+\begin{document}
+
+% ============================================================================
+% TITLE PAGE
+% ============================================================================
+\begin{titlepage}
+\centering
+
+\vspace*{1cm}
+
+{\large\bfseries HO CHI MINH CITY UNIVERSITY OF FOREIGN LANGUAGES}\\[0.1cm]
+{\large\bfseries AND INFORMATION TECHNOLOGY (HUFLIT)}\\[0.2cm]
+{\large FACULTY OF INFORMATION TECHNOLOGY}\\[2cm]
+
+\rule{\textwidth}{1.5pt}\\[0.5cm]
+
+{\Huge\bfseries GRADUATION PROJECT}\\[0.3cm]
+{\Huge\bfseries PROPOSAL}\\[0.5cm]
+
+\rule{\textwidth}{1.5pt}\\[1.5cm]
+
+{\LARGE\bfseries TransUNet for Automated Pancreas}\\[0.2cm]
+{\LARGE\bfseries Segmentation from CT Scans}\\[0.5cm]
+{\Large\itshape A Hybrid CNN-Transformer Deep Learning Approach}\\[2cm]
+
+\begin{tabular}{rl}
+\textbf{Student:} & Danh Hoang Hieu Nghi \\[0.2cm]
+\textbf{Student ID:} & 23DH112270 \\[0.2cm]
+\textbf{Major:} & Information Technology \\[0.2cm]
+\textbf{Supervisor:} & MSc. Vo Thi Hong Tuyet \\[0.2cm]
+\textbf{Email:} & 23dh112270@st.huflit.edu.vn \\
+\end{tabular}
+
+\vfill
+
+{\large\bfseries Ho Chi Minh City, January 2026}
+
+\end{titlepage}
+
+% ============================================================================
+% TABLE OF CONTENTS
+% ============================================================================
+\tableofcontents
+\newpage
+
+% ============================================================================
+% 1. INTRODUCTION
+% ============================================================================
+\section{Introduction}
+\label{sec:introduction}
+
+\subsection{Background and Motivation}
+
+Pancreatic cancer remains one of the most lethal malignancies worldwide, with a 5-year survival rate of approximately 10\%. Early detection and accurate diagnosis play a decisive role in treatment outcomes, and precise segmentation of the pancreas from CT (Computed Tomography) images is the critical first step.
+
+However, automated pancreas segmentation presents significant challenges:
+
+\begin{itemize}
+    \item \textbf{Small organ size:} The pancreas occupies less than 1\% of the total abdominal scan volume
+    \item \textbf{High shape variability:} Significant anatomical differences between patients
+    \item \textbf{Low contrast:} Poor differentiation from surrounding soft tissues
+    \item \textbf{Variable position:} Location changes based on patient positioning and physiological state
+\end{itemize}
+
+Recently, the \textbf{TransUNet} architecture \cite{chen2021} has demonstrated superior performance in medical image segmentation by combining CNNs (Convolutional Neural Networks) with Vision Transformers. This hybrid approach addresses the limitations of pure CNN methods in capturing long-range dependencies while maintaining the ability to extract fine-grained local features essential for accurate boundary delineation.
+
+\subsection{Research Questions}
+
+This project aims to address the following research questions:
+
+\begin{enumerate}[label=\textbf{RQ\arabic*:}]
+    \item How does the hybrid CNN-Transformer architecture (TransUNet) compare to traditional CNN-based methods (U-Net, Attention U-Net) in terms of pancreas segmentation accuracy on the MSD Task07 dataset?
+    \item What is the trade-off between model complexity (parameters, computational cost) and segmentation performance for different TransUNet configurations?
+    \item Can memory-efficient training strategies enable effective TransUNet training on consumer-grade GPUs (4-8GB VRAM) without significant performance degradation?
+    \item How do different preprocessing techniques and data augmentation strategies affect the model's ability to handle the high variability in pancreas shape and position?
+\end{enumerate}
+
+\subsection{Hypotheses}
+
+\begin{enumerate}[label=\textbf{H\arabic*:}]
+    \item TransUNet will achieve at least 5\% improvement in Dice score compared to baseline U-Net due to its ability to capture global context through self-attention mechanisms.
+    \item The TransUNet-Base configuration will provide the optimal balance between performance and computational efficiency for clinical deployment scenarios.
+    \item Gradient checkpointing and mixed-precision training will reduce memory requirements by at least 40\% while maintaining model accuracy within 1\% of full-precision training.
+\end{enumerate}
+
+\subsection{Objectives}
+
+\textbf{Primary Objective:}
+\begin{quote}
+To implement and evaluate the TransUNet architecture for automated pancreas segmentation from CT scans, achieving competitive performance with state-of-the-art methods.
+\end{quote}
+
+\textbf{Specific Objectives:}
+\begin{enumerate}
+    \item Research and implement the complete TransUNet architecture
+    \item Develop an optimized data preprocessing pipeline for pancreas CT images
+    \item Design memory-efficient training strategies for consumer-grade GPUs
+    \item Conduct quantitative and qualitative evaluation of model performance
+    \item Provide open-source code and comprehensive documentation
+\end{enumerate}
+
+\subsection{Scope}
+
+\begin{itemize}
+    \item \textbf{Dataset:} Medical Segmentation Decathlon Task07 Pancreas (420 volumes)
+    \item \textbf{Approach:} 2D slice-based training
+    \item \textbf{Framework:} PyTorch 2.0+, MONAI 1.3+
+    \item \textbf{Minimum Hardware:} NVIDIA GPU with 4GB+ VRAM
+\end{itemize}
+
+\subsection{Significance and Contributions}
+
+This research makes the following contributions:
+
+\begin{enumerate}
+    \item \textbf{Theoretical Contribution:} Systematic evaluation of CNN-Transformer hybrid architectures for the challenging task of pancreas segmentation, providing insights into the effectiveness of self-attention mechanisms for small organ segmentation with high shape variability.
+    
+    \item \textbf{Practical Contribution:} Development of memory-efficient training strategies (gradient checkpointing, mixed-precision training) that enable state-of-the-art model training on consumer-grade hardware, democratizing access to advanced medical imaging AI.
+    
+    \item \textbf{Methodological Contribution:} Comprehensive preprocessing pipeline specifically optimized for pancreas CT images, including adaptive HU windowing and intelligent slice selection strategies.
+    
+    \item \textbf{Community Contribution:} Open-source implementation with detailed documentation, pre-trained models, and tutorial notebooks to facilitate reproducibility and further research in medical image segmentation.
+\end{enumerate}
+
+% ============================================================================
+% 2. LITERATURE REVIEW
+% ============================================================================
+\section{Literature Review}
+\label{sec:literature}
+
+\subsection{Deep Learning for Medical Image Segmentation}
+
+U-Net \cite{ronneberger2015} established the encoder-decoder architecture with skip connections as the standard for medical image segmentation. Subsequent improvements include:
+
+\begin{itemize}
+    \item \textbf{Attention U-Net} \cite{oktay2018}: Adding attention mechanisms to skip connections
+    \item \textbf{U-Net++}: Dense skip connections
+    \item \textbf{ResUNet}: Integrating residual connections
+\end{itemize}
+
+\subsection{Vision Transformer}
+
+Vision Transformer (ViT) \cite{dosovitskiy2020} applies the self-attention mechanism to computer vision, enabling models to learn long-range relationships between image regions. The self-attention formula:
+
+\begin{equation}
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+\end{equation}
+
+\subsection{Hybrid CNN-Transformer Architectures}
+
+TransUNet \cite{chen2021} combines the advantages of both approaches:
+\begin{itemize}
+    \item \textbf{CNN:} Efficient local feature extraction
+    \item \textbf{Transformer:} Global context modeling
+    \item \textbf{U-Net Decoder:} Resolution recovery with skip connections
+\end{itemize}
+
+Other notable hybrid architectures include UNETR \cite{hatamizadeh2022} which uses a pure Transformer encoder, and Swin-UNet which employs shifted window attention for computational efficiency.
+
+\subsection{Comparison of State-of-the-Art Methods}
+
+\begin{table}[!ht]
+\centering
+\caption{Comparison of segmentation methods for pancreas (reported on various datasets)}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Method} & \textbf{DSC} & \textbf{HD95} & \textbf{Year} & \textbf{Architecture} \\
+\hline
+U-Net \cite{ronneberger2015} & 0.71-0.76 & 18-25mm & 2015 & CNN \\
+Attention U-Net \cite{oktay2018} & 0.74-0.79 & 12-18mm & 2018 & CNN+Attention \\
+nnU-Net & 0.79-0.84 & 8-15mm & 2021 & Self-configuring CNN \\
+TransUNet \cite{chen2021} & 0.80-0.85 & 6-12mm & 2021 & CNN+Transformer \\
+UNETR \cite{hatamizadeh2022} & 0.78-0.83 & 8-14mm & 2022 & Pure Transformer \\
+Swin-UNet & 0.79-0.84 & 7-13mm & 2022 & Swin Transformer \\
+\hline
+\end{tabular}
+\label{tab:sota_comparison}
+\end{table}
+
+\subsection{Research Gaps}
+
+Despite significant progress, several gaps remain in the literature:
+
+\begin{enumerate}
+    \item \textbf{Limited accessibility:} Most state-of-the-art methods require high-end GPUs (16GB+ VRAM) for training, limiting adoption in resource-constrained settings such as hospitals in developing countries.
+    
+    \item \textbf{Reproducibility issues:} Many published works lack complete implementation details or open-source code, making fair comparison difficult.
+    
+    \item \textbf{2D vs 3D trade-offs:} While 3D methods capture volumetric context, they are computationally expensive. The optimal balance between 2D efficiency and 3D context for pancreas segmentation remains underexplored.
+    
+    \item \textbf{Preprocessing standardization:} Different studies use varying preprocessing pipelines, making cross-study comparison challenging.
+    
+    \item \textbf{Clinical deployment considerations:} Few studies address practical deployment aspects such as inference speed, memory footprint, and integration with clinical workflows.
+\end{enumerate}
+
+This project addresses these gaps by providing an accessible, well-documented implementation with memory-efficient training strategies and comprehensive benchmarking.
+
+% ============================================================================
+% 3. METHODOLOGY
+% ============================================================================
+\section{Methodology}
+\label{sec:methodology}
+
+\subsection{TransUNet Architecture}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.95\textwidth]{TransUNet-Architecture overview.png}
+\caption{TransUNet architecture overview. The model combines a CNN encoder (ResNet-50) for local feature extraction with a Vision Transformer for global context modeling, followed by a cascaded upsampler decoder with skip connections.}
+\label{fig:architecture}
+\end{figure}
+
+\textbf{Main Components:}
+\begin{enumerate}
+    \item \textbf{CNN Encoder:} 4 ResNet-style stages, output channels $\{64, 128, 256, 512\}$
+    \item \textbf{Vision Transformer:} 12 layers, hidden dim 768, 12 attention heads
+    \item \textbf{CNN Decoder:} 4 upsampling stages with skip connections
+\end{enumerate}
+
+\subsection{Loss Function}
+
+Using hybrid loss to address class imbalance:
+
+\begin{equation}
+\mathcal{L} = 0.5 \cdot \mathcal{L}_{\text{Dice}} + 0.5 \cdot \mathcal{L}_{\text{CE}}
+\end{equation}
+
+\subsection{Preprocessing Pipeline}
+
+\begin{enumerate}
+    \item Load NIfTI and standardize orientation (RAS)
+    \item Resample to isotropic spacing ($1.0 \times 1.0 \times 1.0$ mm)
+    \item HU windowing: clip [-175, 250], normalize to [0, 1]
+    \item Foreground cropping
+    \item Extract 2D axial slices
+    \item Resize to $224 \times 224$
+\end{enumerate}
+
+\subsection{Experimental Design}
+
+\subsubsection{Training Configuration}
+
+\begin{table}[!ht]
+\centering
+\caption{Hyperparameter configuration}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Hyperparameter} & \textbf{Value} \\
+\hline
+Optimizer & AdamW \\
+Learning Rate & $1 \times 10^{-4}$ (with cosine annealing) \\
+Weight Decay & $1 \times 10^{-4}$ \\
+Batch Size & 8-16 (depending on GPU memory) \\
+Epochs & 150 (with early stopping, patience=20) \\
+Warmup Epochs & 10 \\
+\hline
+\end{tabular}
+\label{tab:hyperparameters}
+\end{table}
+
+\subsubsection{Data Augmentation}
+
+To improve model generalization and address limited training data:
+\begin{itemize}
+    \item Random horizontal/vertical flipping (p=0.5)
+    \item Random rotation ($\pm15^{\circ}$)
+    \item Random scaling (0.9-1.1)
+    \item Elastic deformation ($\alpha=100$, $\sigma=10$)
+    \item Intensity augmentation: brightness ($\pm0.1$), contrast ($\pm0.1$)
+    \item Random Gaussian noise ($\sigma=0.01$)
+\end{itemize}
+
+\subsubsection{Memory-Efficient Training Strategies}
+
+\begin{enumerate}
+    \item \textbf{Gradient Checkpointing:} Trade computation for memory by recomputing intermediate activations during backward pass, reducing memory by $\sim$40\%.
+    \item \textbf{Mixed-Precision Training (FP16):} Using NVIDIA Automatic Mixed Precision (AMP) to reduce memory footprint and accelerate training.
+    \item \textbf{Gradient Accumulation:} Simulate larger batch sizes by accumulating gradients over multiple forward passes.
+\end{enumerate}
+
+\subsubsection{Cross-Validation Strategy}
+
+To ensure robust performance estimation:
+\begin{itemize}
+    \item 5-fold cross-validation on the training set
+    \item Stratified splitting to maintain pancreas-to-background ratio
+    \item Final model trained on full training set, evaluated on held-out test set
+    \item Statistical significance testing using paired t-test ($\alpha=0.05$)
+\end{itemize}
+
+\subsubsection{Ablation Studies}
+
+The following ablation experiments will be conducted:
+\begin{enumerate}
+    \item Impact of Transformer depth (6, 12, 24 layers)
+    \item Effect of patch size (8, 16, 32)
+    \item Contribution of skip connections
+    \item Loss function comparison (Dice, CE, Dice+CE, Focal)
+    \item Preprocessing variations (HU window ranges, normalization methods)
+\end{enumerate}
+
+% ============================================================================
+% 4. DATASET
+% ============================================================================
+\section{Dataset}
+\label{sec:dataset}
+
+\textbf{Medical Segmentation Decathlon (MSD) Task07 Pancreas:}
+
+\begin{table}[!ht]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Attribute} & \textbf{Value} \\
+\hline
+Source & Memorial Sloan Kettering Cancer Center \\
+Volume Count & 420 CT volumes \\
+Labels & Background (0), Pancreas (1), Tumor (2) \\
+Format & NIfTI (.nii.gz) \\
+Size & $\sim$11.4 GB \\
+\hline
+\end{tabular}
+\caption{MSD Task07 Pancreas dataset information}
+\end{table}
+
+\textbf{Data Split:}
+\begin{itemize}
+    \item Training: 80\% (336 volumes, $\sim$8,000 slices)
+    \item Validation: 10\% (42 volumes)
+    \item Test: 10\% (42 volumes)
+\end{itemize}
+
+% ============================================================================
+% 5. EVALUATION METRICS
+% ============================================================================
+\section{Evaluation Metrics}
+\label{sec:metrics}
+
+\subsection{Dice Similarity Coefficient (DSC)}
+
+\begin{equation}
+\text{DSC} = \frac{2|P \cap G|}{|P| + |G|}
+\end{equation}
+
+Measures overlap between prediction and ground truth (0-1).
+
+\subsection{Hausdorff Distance (HD95)}
+
+\begin{equation}
+\text{HD}(P, G) = \max\left(\sup_{p \in P} \inf_{g \in G} d(p, g), \sup_{g \in G} \inf_{p \in P} d(g, p)\right)
+\end{equation}
+
+Measures boundary distance (mm), HD95 is the 95th percentile.
+
+\subsection{Intersection over Union (IoU)}
+
+\begin{equation}
+\text{IoU} = \frac{|P \cap G|}{|P \cup G|}
+\end{equation}
+
+% ============================================================================
+% 6. EXPECTED RESULTS
+% ============================================================================
+\section{Expected Results}
+\label{sec:expected}
+
+Based on the original TransUNet paper and related works on pancreas segmentation, we expect the following performance metrics on the test set (Table~\ref{tab:expected_results}).
+
+\vspace{0.5cm}
+\noindent
+\begin{minipage}{\textwidth}
+\centering
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Model} & \textbf{DSC} & \textbf{HD95 (mm)} & \textbf{Params} \\
+\hline
+U-Net (baseline) & 0.70-0.75 & 15-20 & 31M \\
+TransUNet-Small & 0.75-0.78 & 12-16 & 17M \\
+TransUNet-Base & 0.78-0.83 & 8-12 & 105M \\
+TransUNet-Large & 0.82-0.86 & 5-10 & 300M \\
+\hline
+\end{tabular}
+\vspace{0.2cm}
+
+\textbf{Table 4:} Expected results on test set
+\label{tab:expected_results}
+\end{minipage}
+\vspace{0.5cm}
+
+The TransUNet-Base model is expected to achieve the best trade-off between accuracy and computational cost, making it suitable for potential clinical deployment.
+
+% ============================================================================
+% 7. TIMELINE
+% ============================================================================
+\section{Timeline}
+\label{sec:timeline}
+
+The project will be conducted over a 12-week period. The detailed timeline with tasks and deliverables is presented in Table~\ref{tab:timeline}.
+
+\vspace{0.5cm}
+\noindent
+\begin{minipage}{\textwidth}
+\centering
+\begin{tabular}{|c|l|l|}
+\hline
+\textbf{Week} & \textbf{Task} & \textbf{Deliverable} \\
+\hline
+1-2 & Literature review & Survey document \\
+3-4 & Dataset preparation, preprocessing & Data pipeline \\
+5-6 & TransUNet implementation & Model code \\
+7-8 & Training and fine-tuning & Trained models \\
+9-10 & Evaluation and ablation study & Results analysis \\
+11-12 & Report writing, documentation & Final report \\
+\hline
+\end{tabular}
+\vspace{0.2cm}
+
+\textbf{Table 5:} Project timeline (12 weeks)
+\label{tab:timeline}
+\end{minipage}
+\vspace{0.5cm}
+
+% ============================================================================
+% 8. DELIVERABLES
+% ============================================================================
+\section{Deliverables}
+\label{sec:deliverables}
+
+\begin{enumerate}
+    \item \textbf{Source Code:} GitHub repository with complete implementation
+    \item \textbf{Trained Models:} Checkpoints for Small/Base/Large variants
+    \item \textbf{Documentation:} README, API docs, tutorial notebooks
+    \item \textbf{Report:} Complete graduation project report
+    \item \textbf{Demo:} Jupyter notebooks and/or web demo
+\end{enumerate}
+
+\textbf{GitHub Repository:}\\
+\url{https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation}
+
+% ============================================================================
+% 9. LIMITATIONS AND ETHICAL CONSIDERATIONS
+% ============================================================================
+\section{Limitations and Ethical Considerations}
+\label{sec:limitations}
+
+\subsection{Technical Limitations}
+
+\begin{enumerate}
+    \item \textbf{2D Approach Limitation:} The 2D slice-based approach may miss important volumetric context that 3D methods can capture. This trade-off is made to enable training on consumer-grade hardware.
+    
+    \item \textbf{Class Imbalance:} The pancreas occupies $<$1\% of abdominal CT volume. While addressed through loss functions and sampling strategies, severe imbalance may still affect performance on boundary regions.
+    
+    \item \textbf{Domain Shift:} The model trained on MSD Task07 may not generalize well to CT scans from different scanners, protocols, or patient populations without fine-tuning.
+    
+    \item \textbf{Tumor Segmentation:} This project focuses primarily on pancreas parenchyma segmentation. Tumor segmentation (label 2) is secondary and may require additional specialized techniques.
+\end{enumerate}
+
+\subsection{Risk Mitigation}
+
+\begin{itemize}
+    \item Extensive validation on held-out test set
+    \item Cross-validation to assess model stability
+    \item Uncertainty estimation through Monte Carlo dropout
+    \item Clear documentation of model limitations for end-users
+\end{itemize}
+
+\subsection{Ethical Considerations}
+
+\begin{enumerate}
+    \item \textbf{Data Privacy:} The MSD dataset is publicly available and anonymized. No personally identifiable information (PII) is used or stored.
+    
+    \item \textbf{Clinical Use Disclaimer:} This is a research project and the developed model is NOT intended for direct clinical diagnosis without proper validation by qualified medical professionals and regulatory approval.
+    
+    \item \textbf{Bias and Fairness:} The MSD dataset may not represent global patient diversity. Model performance should be validated on diverse populations before any clinical application.
+    
+    \item \textbf{Reproducibility:} All code, trained models, and documentation will be made publicly available to ensure reproducibility and facilitate peer review.
+\end{enumerate}
+
+% ============================================================================
+% 10. CONCLUSION
+% ============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+This proposal outlines a comprehensive research plan to implement and evaluate TransUNet for automated pancreas segmentation from CT scans. The project addresses key research questions regarding the effectiveness of hybrid CNN-Transformer architectures, computational efficiency trade-offs, and practical deployment considerations.
+
+The expected contributions include: (1) a systematic benchmark of TransUNet variants on the MSD Task07 dataset, (2) memory-efficient training strategies enabling consumer-grade GPU training, (3) an optimized preprocessing pipeline for pancreas CT images, and (4) open-source implementation with comprehensive documentation.
+
+Successful completion of this project will advance the state of medical image segmentation research while providing accessible tools for the broader research community.
+
+% ============================================================================
+% REFERENCES
+% ============================================================================
+\newpage
+\begin{thebibliography}{99}
+
+\bibitem{chen2021}
+J. Chen et al., ``TransUNet: Transformers make strong encoders for medical image segmentation,'' \textit{arXiv:2102.04306}, 2021.
+\newline\url{https://arxiv.org/abs/2102.04306}
+
+\bibitem{ronneberger2015}
+O. Ronneberger, P. Fischer, T. Brox, ``U-Net: Convolutional networks for biomedical image segmentation,'' \textit{MICCAI}, 2015.
+\newline\url{https://arxiv.org/abs/1505.04597}
+
+\bibitem{dosovitskiy2020}
+A. Dosovitskiy et al., ``An image is worth 16x16 words: Transformers for image recognition at scale,'' \textit{ICLR}, 2021.
+\newline\url{https://arxiv.org/abs/2010.11929}
+
+\bibitem{oktay2018}
+O. Oktay et al., ``Attention U-Net: Learning where to look for the pancreas,'' \textit{MIDL}, 2018.
+\newline\url{https://arxiv.org/abs/1804.03999}
+
+\bibitem{simpson2019}
+A. L. Simpson et al., ``A large annotated medical image dataset for the development and evaluation of segmentation algorithms,'' \textit{arXiv:1902.09063}, 2019.
+\newline\url{https://arxiv.org/abs/1902.09063}
+
+\bibitem{hatamizadeh2022}
+A. Hatamizadeh et al., ``UNETR: Transformers for 3D medical image segmentation,'' \textit{WACV}, 2022.
+\newline\url{https://arxiv.org/abs/2103.10504}
+
+\end{thebibliography}
+
+\end{document}

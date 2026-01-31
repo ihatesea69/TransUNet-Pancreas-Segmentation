@@ -145,6 +145,10 @@ class SlicingDataset(Dataset):
         image_slice = self._resize_slice(image_slice, self.target_size)
         label_slice = self._resize_slice(label_slice, self.target_size, is_label=True)
         
+        # Merge tumor (class 2) with pancreas (class 1) for binary segmentation
+        # 0 = background, 1 = pancreas + tumor
+        label_slice = np.where(label_slice > 0, 1, 0)
+        
         # Convert to tensor and add channel dimension
         image_tensor = torch.from_numpy(image_slice).float().unsqueeze(0)
         label_tensor = torch.from_numpy(label_slice).long()
