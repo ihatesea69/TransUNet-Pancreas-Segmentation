@@ -1,9 +1,9 @@
 [project]
 name = "pancreas-segmentation"
 version = "0.1.0"
-description = "Add your description here"
+description = "TransUNet implementation for automated pancreas segmentation from CT scans using deep learning"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.9"
 dependencies = [
     "einops>=0.8.1",
     "ipykernel>=7.1.0",

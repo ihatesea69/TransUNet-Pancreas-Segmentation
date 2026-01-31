@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TransUNet: Automated pancreas segmentation from CT scans using hybrid CNN-Transformer architecture">
+    <meta name="keywords" content="TransUNet, Medical AI, Pancreas Segmentation, Deep Learning, Computer Vision">
+    <meta name="author" content="TransUNet Research Team">
+    <title>TransUNet: Pancreas Segmentation | AI-Powered Medical Imaging</title>
+    
+    <style>
+        /* Swiss/International Design System */
+        :root {
+            --primary: #0066CC;
+            --secondary: #00A3E0;
+            --accent: #FF6B35;
+            --success: #00C48C;
+            --text-dark: #1A1A1A;
+            --text-light: #FFFFFF;
+            --bg-light: #FAFAFA;
+            --bg-white: #FFFFFF;
+            --grid-gap: 24px;
+            --border-radius: 2px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-white);
+            overflow-x: hidden;
+        }
+        
+        /* Grid System */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--grid-gap);
+        }
+        
+        .grid {
+            display: grid;
+            gap: var(--grid-gap);
+        }
+        
+        /* Typography */
+        h1, h2, h3, h4 {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+        
+        h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            margin-bottom: 1rem;
+        }
+        
+        h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin-bottom: 1.5rem;
+        }
+        
+        h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        p {
+            font-size: 1.125rem;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+        
+        /* Header/Navigation */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--bg-white);
+            border-bottom: 1px solid #E0E0E0;
+            z-index: 1000;
+            padding: 1rem 0;
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 120px 0 80px;
+            background: linear-gradient(135deg, #F0F8FF 0%, #FFFFFF 100%);
+        }
+        
+        .hero-content {
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            gap: 4rem;
+        }
+        
+        .hero-text h1 {
+            color: var(--text-dark);
+        }
+        
+        .hero-text .subtitle {
+            font-size: 1.25rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: var(--primary);
+            color: var(--text-light);
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: var(--border-radius);
+        }
+        
+        .cta-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: var(--text-light);
+        }
+        
+        .btn-primary:hover {
+            background: #0052A3;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-dark);
+            border: 2px solid var(--text-dark);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--text-dark);
+            color: var(--text-light);
+        }
+        
+        /* Architecture Diagram */
+        .architecture-visual {
+            background: var(--bg-white);
+            padding: 2rem;
+            border: 1px solid #E0E0E0;
+            border-radius: var(--border-radius);
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            overflow-x: auto;
+            line-height: 1.4;
+        }
+        
+        /* Stats Section */
+        .stats {
+            padding: 80px 0;
+            background: var(--primary);
+            color: var(--text-light);
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            text-align: center;
+        }
+        
+        .stat-item h3 {
+            font-size: 3rem;
+            color: var(--text-light);
+        }
+        
+        .stat-item p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        /* Features Section */
+        .features {
+            padding: 80px 0;
+            background: var(--bg-light);
+        }
+        
+        .features-grid {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .feature-card {
+            background: var(--bg-white);
+            padding: 2rem;
+            border: 1px solid #E0E0E0;
+            border-radius: var(--border-radius);
+            transition: transform 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Architecture Section */
+        .architecture {
+            padding: 80px 0;
+        }
+        
+        .architecture-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+        
+        .model-variants {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+        
+        .model-variants th,
+        .model-variants td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        
+        .model-variants th {
+            background: var(--bg-light);
+            font-weight: 700;
+        }
+        
+        /* Dataset Section */
+        .dataset {
+            padding: 80px 0;
+            background: var(--bg-light);
+        }
+        
+        .dataset-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+        }
+        
+        .dataset-info {
+            list-style: none;
+        }
+        
+        .dataset-info li {
+            padding: 1rem 0;
+            border-bottom: 1px solid #E0E0E0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .dataset-info strong {
+            color: var(--primary);
+        }
+        
+        /* Performance Section */
+        .performance {
+            padding: 80px 0;
+        }
+        
+        .metrics-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-light);
+            border-radius: var(--border-radius);
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--success);
+            display: block;
+            margin: 1rem 0;
+        }
+        
+        /* Getting Started Section */
+        .getting-started {
+            padding: 80px 0;
+            background: var(--text-dark);
+            color: var(--text-light);
+        }
+        
+        .getting-started h2 {
+            color: var(--text-light);
+        }
+        
+        .steps-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .step-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            color: var(--text-light);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .code-block {
+            background: #000;
+            color: #0F0;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin-top: 2rem;
+        }
+        
+        /* Footer */
+        footer {
+            padding: 60px 0 30px;
+            background: var(--text-dark);
+            color: var(--text-light);
+        }
+        
+        .footer-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+        
+        .footer-section h4 {
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+        
+        .footer-section ul {
+            list-style: none;
+        }
+        
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.2s;
+        }
+        
+        .footer-section a:hover {
+            color: var(--text-light);
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.7;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-content,
+            .architecture-grid,
+            .dataset-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .cta-group {
+                flex-direction: column;
+            }
+        }
+        
+        /* Smooth Scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeInUp 0.8s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <header>
+        <nav class="container">
+            <a href="#" class="logo">TransUNet</a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#dataset">Dataset</a></li>
+                <li><a href="#performance">Performance</a></li>
+                <li><a href="#get-started">Get Started</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="grid hero-content fade-in">
+                <div class="hero-text">
+                    <div>
+                        <span class="badge">Python 3.9+</span>
+                        <span class="badge">PyTorch 2.0+</span>
+                        <span class="badge">MONAI 1.3+</span>
+                    </div>
+                    <h1>Pancreas Segmentation with TransUNet</h1>
+                    <p class="subtitle">
+                        Hybrid CNN-Transformer architecture for automated pancreas segmentation from CT scans. 
+                        Combining local feature extraction with global context modeling.
+                    </p>
+                    <div class="cta-group">
+                        <a href="https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation" class="btn btn-primary">
+                            View on GitHub
+                        </a>
+                        <a href="#get-started" class="btn btn-secondary">
+                            Get Started
+                        </a>
+                    </div>
+                </div>
+                <div class="architecture-visual">
+<pre>
+┌─────────────────────────┐
+│   Input CT (224×224)    │
+└───────────┬─────────────┘
+            │
+            ▼
+┌─────────────────────────┐
+│     CNN Encoder         │
+│   ┌─────────────────┐   │
+│   │  Multi-scale    │   │
+│   │  Features       │   │
+│   └─────────────────┘   │
+└───────────┬─────────────┘
+            │
+            ▼
+┌─────────────────────────┐
+│  Vision Transformer     │
+│   ┌─────────────────┐   │
+│   │  Self-Attention │   │
+│   │  12 Layers      │   │
+│   └─────────────────┘   │
+└───────────┬─────────────┘
+            │
+            ▼
+┌─────────────────────────┐
+│     CNN Decoder         │
+│   ┌─────────────────┐   │
+│   │ Skip Connections│   │
+│   │ U-Net Style     │   │
+│   └─────────────────┘   │
+└───────────┬─────────────┘
+            │
+            ▼
+  Segmentation Output
+  [Background | Pancreas]
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="grid stats-grid">
+                <div class="stat-item">
+                    <h3>0.75-0.85</h3>
+                    <p>Dice Score</p>
+                </div>
+                <div class="stat-item">
+                    <h3>5-15mm</h3>
+                    <p>Hausdorff Distance</p>
+                </div>
+                <div class="stat-item">
+                    <h3>533</h3>
+                    <p>Lines of Core Code</p>
+                </div>
+                <div class="stat-item">
+                    <h3>420</h3>
+                    <p>CT Scan Volumes</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2>Key Features</h2>
+            <p>Production-ready deep learning pipeline for medical image segmentation</p>
+            
+            <div class="grid features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🏗️</div>
+                    <h3>Complete Implementation</h3>
+                    <p>TransUNet architecture built from scratch with 533 lines of clean, modular code.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔬</div>
+                    <h3>MONAI Pipeline</h3>
+                    <p>Professional preprocessing with HU windowing, isotropic resampling, and foreground cropping.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Memory Efficient</h3>
+                    <p>2D slice-based training strategy works on consumer GPUs with 4GB+ VRAM.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>3D Inference</h3>
+                    <p>Slice-by-slice processing with aggregation for complete volume segmentation.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Hybrid Loss</h3>
+                    <p>Combines Dice Loss and Cross-Entropy to handle extreme class imbalance.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Interpretability</h3>
+                    <p>Attention map visualization for understanding model decisions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture Section -->
+    <section id="architecture" class="architecture">
+        <div class="container">
+            <h2>Architecture</h2>
+            
+            <div class="grid architecture-grid">
+                <div>
+                    <h3>Three-Stage Pipeline</h3>
+                    <p>
+                        <strong>CNN Encoder:</strong> ResNet-style backbone extracts hierarchical features 
+                        at multiple scales (1/4, 1/8, 1/16, 1/32 resolution).
+                    </p>
+                    <p>
+                        <strong>Transformer Bottleneck:</strong> 12-layer Vision Transformer captures 
+                        global context through self-attention mechanisms.
+                    </p>
+                    <p>
+                        <strong>CNN Decoder:</strong> U-Net architecture with skip connections progressively 
+                        recovers spatial resolution for precise segmentation.
+                    </p>
+                </div>
+                
+                <div>
+                    <h3>Model Variants</h3>
+                    <table class="model-variants">
+                        <thead>
+                            <tr>
+                                <th>Variant</th>
+                                <th>Embed Dim</th>
+                                <th>Heads</th>
+                                <th>Layers</th>
+                                <th>Params</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Small</strong></td>
+                                <td>384</td>
+                                <td>6</td>
+                                <td>6</td>
+                                <td>17M</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Base</strong></td>
+                                <td>768</td>
+                                <td>12</td>
+                                <td>12</td>
+                                <td>105M</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Large</strong></td>
+                                <td>1024</td>
+                                <td>16</td>
+                                <td>24</td>
+                                <td>300M</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dataset Section -->
+    <section id="dataset" class="dataset">
+        <div class="container">
+            <h2>Medical Segmentation Decathlon</h2>
+            
+            <div class="grid dataset-grid">
+                <div>
+                    <h3>Task07: Pancreas</h3>
+                    <p>
+                        High-quality annotated dataset from Memorial Sloan Kettering Cancer Center. 
+                        Includes 420 portal venous phase CT scans with expert-labeled pancreas 
+                        and tumor segmentations.
+                    </p>
+                    <p>
+                        Automatically downloaded via MONAI in Notebook 01. Preprocessing includes 
+                        orientation standardization (RAS), isotropic 1.0mm resampling, and 
+                        HU windowing [-175, 250] for soft tissue focus.
+                    </p>
+                </div>
+                
+                <div>
+                    <ul class="dataset-info">
+                        <li>
+                            <span>Volumes</span>
+                            <strong>420 scans</strong>
+                        </li>
+                        <li>
+                            <span>Modality</span>
+                            <strong>CT (Portal Venous)</strong>
+                        </li>
+                        <li>
+                            <span>Labels</span>
+                            <strong>Background, Pancreas, Tumor</strong>
+                        </li>
+                        <li>
+                            <span>Format</span>
+                            <strong>NIfTI (.nii.gz)</strong>
+                        </li>
+                        <li>
+                            <span>Size</span>
+                            <strong>~11.4GB compressed</strong>
+                        </li>
+                        <li>
+                            <span>Split</span>
+                            <strong>80% / 10% / 10%</strong>
+                        </li>
+                        <li>
+                            <span>License</span>
+                            <strong>CC-BY-SA 4.0</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Performance Section -->
+    <section id="performance" class="performance">
+        <div class="container">
+            <h2>Expected Performance</h2>
+            <p>Benchmark metrics based on TransUNet paper results</p>
+            
+            <div class="grid metrics-grid">
+                <div class="metric-card">
+                    <h3>Dice Score</h3>
+                    <span class="metric-value">0.75 - 0.85</span>
+                    <p>Overlap between prediction and ground truth</p>
+                </div>
+                
+                <div class="metric-card">
+                    <h3>Hausdorff Distance</h3>
+                    <span class="metric-value">5 - 15mm</span>
+                    <p>Maximum boundary distance error</p>
+                </div>
+                
+                <div class="metric-card">
+                    <h3>Inference Speed</h3>
+                    <span class="metric-value">2-3 sec</span>
+                    <p>Per slice on GPU hardware</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Getting Started Section -->
+    <section id="get-started" class="getting-started">
+        <div class="container">
+            <h2>Get Started</h2>
+            <p style="color: rgba(255,255,255,0.8);">Three ways to use TransUNet: Interactive Notebooks, CLI, or Python API</p>
+            
+            <div class="grid steps-grid">
+                <div class="step-card">
+                    <span class="step-number">1</span>
+                    <h3>Clone Repository</h3>
+                    <p>Get the code and setup environment</p>
+                    <div class="code-block">
+git clone https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation.git
+cd TransUNet-Pancreas-Segmentation
+uv sync
+                    </div>
+                </div>
+                
+                <div class="step-card">
+                    <span class="step-number">2</span>
+                    <h3>Run Notebooks</h3>
+                    <p>Interactive exploration and training</p>
+                    <div class="code-block">
+jupyter notebook 01_Data_Exploration_and_Processing.ipynb
+                    </div>
+                </div>
+                
+                <div class="step-card">
+                    <span class="step-number">3</span>
+                    <h3>Train Model</h3>
+                    <p>Start training with CLI or notebooks</p>
+                    <div class="code-block">
+python main.py train --variant small --epochs 50
+                    </div>
+                </div>
+                
+                <div class="step-card">
+                    <span class="step-number">4</span>
+                    <h3>Run Inference</h3>
+                    <p>Segment new CT volumes</p>
+                    <div class="code-block">
+python main.py inference --checkpoint model.pth --input scan.nii.gz
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation" class="btn btn-primary" style="background: var(--accent);">
+                    View Full Documentation →
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="grid footer-grid">
+                <div class="footer-section">
+                    <h4>TransUNet</h4>
+                    <p style="color: rgba(255,255,255,0.7);">
+                        Hybrid CNN-Transformer architecture for automated pancreas segmentation from CT scans.
+                    </p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation">GitHub Repository</a></li>
+                        <li><a href="https://arxiv.org/abs/2102.04306">Original Paper</a></li>
+                        <li><a href="http://medicaldecathlon.com/">MSD Dataset</a></li>
+                        <li><a href="https://monai.io/">MONAI Framework</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Documentation</h4>
+                    <ul>
+                        <li><a href="https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation/blob/master/README.md">README</a></li>
+                        <li><a href="https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation/blob/master/QUICKSTART.md">Quick Start</a></li>
+                        <li><a href="https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation/blob/master/CHANGELOG.md">Changelog</a></li>
+                        <li><a href="https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation/blob/master/CLAUDE.md">Development Guide</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Community</h4>
+                    <ul>
+                        <li><a href="https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation/issues">Issues</a></li>
+                        <li><a href="https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation/discussions">Discussions</a></li>
+                        <li><a href="https://github.com/ihatesea69/TransUNet-Pancreas-Segmentation/blob/master/LICENSE">License (MIT)</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 TransUNet Pancreas Segmentation Project. Released under MIT License.</p>
+                <p>Built with PyTorch, MONAI, and modern medical AI practices.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Fade in elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>

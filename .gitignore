@@ -1,4 +1,10 @@
+# ============================================
+# TransUNet Pancreas Segmentation - .gitignore
+# ============================================
+
+# ===================
 # Python
+# ===================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -20,33 +26,52 @@ wheels/
 .installed.cfg
 *.egg
 
+# ===================
 # Virtual Environment
+# ===================
 .venv/
 venv/
 ENV/
 env/
 .env
 
-# UV
+# ===================
+# UV Package Manager
+# ===================
 .uv/
 
+# ===================
 # Jupyter Notebook
+# ===================
 .ipynb_checkpoints/
-*.ipynb_checkpoints
+*/.ipynb_checkpoints/
 
-# IDE
+# ===================
+# IDE & Editors
+# ===================
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
+.spyderproject
+.spyproject
 
-# OS
+# ===================
+# OS Generated
+# ===================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 desktop.ini
 
-# Project specific - Data
+# ===================
+# Data (large files)
+# ===================
 data/
 *.tar
 *.tar.gz
@@ -54,29 +79,59 @@ data/
 *.nii
 *.nii.gz
 
-# Project specific - Checkpoints (large files)
+# ===================
+# Model Checkpoints
+# ===================
 checkpoints/*.pth
 checkpoints/*.pt
+checkpoints/*.ckpt
 !checkpoints/.gitkeep
 
-# Project specific - Outputs
+# ===================
+# Outputs
+# ===================
 outputs/*.json
 outputs/*.png
+outputs/*.nii.gz
 !outputs/.gitkeep
 
-# Logs
+# ===================
+# LaTeX Auxiliary
+# ===================
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+
+# ===================
+# Logs & Cache
+# ===================
 *.log
 logs/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
-# Temporary files
+# ===================
+# Temporary
+# ===================
 tmp/
 temp/
 *.tmp
+*.bak
 
-# Coverage
-.coverage
-htmlcov/
-.pytest_cache/
+# ===================
+# Claude/AI Config
+# ===================
+.claude/
+CLAUDE.md
 
-# mypy
-.mypy_cache/

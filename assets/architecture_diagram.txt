@@ -1,0 +1,101 @@
+# TransUNet Architecture Diagram
+
+This is a placeholder. Replace with actual PNG/SVG image.
+
+## ASCII Representation:
+
+```
+╔═══════════════════════════════════════════════════════════════╗
+║              TransUNet: Hybrid CNN-Transformer               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+                    Input CT Slice
+                   (1 × 224 × 224)
+                          │
+                          ▼
+        ┌─────────────────────────────────────┐
+        │        CNN ENCODER (ResNet)         │
+        │  ┌─────────────────────────────┐   │
+        │  │ Stage 1: 64 ch  @ 1/4 res   │◄──┼─── Skip 1
+        │  └─────────────────────────────┘   │
+        │  ┌─────────────────────────────┐   │
+        │  │ Stage 2: 128 ch @ 1/8 res   │◄──┼─── Skip 2
+        │  └─────────────────────────────┘   │
+        │  ┌─────────────────────────────┐   │
+        │  │ Stage 3: 256 ch @ 1/16 res  │◄──┼─── Skip 3
+        │  └─────────────────────────────┘   │
+        │  ┌─────────────────────────────┐   │
+        │  │ Stage 4: 512 ch @ 1/32 res  │   │
+        │  └─────────────────────────────┘   │
+        └──────────────┬──────────────────────┘
+                       │
+                       ▼
+        ┌─────────────────────────────────────┐
+        │      PATCH EMBEDDING (1×1 Conv)     │
+        │      512 channels → 768 channels    │
+        │       Flatten to 49 patches         │
+        └──────────────┬──────────────────────┘
+                       │
+                       ▼
+        ┌─────────────────────────────────────┐
+        │     VISION TRANSFORMER ENCODER      │
+        │  ┌─────────────────────────────┐   │
+        │  │  + Positional Embedding     │   │
+        │  │  + 12 Transformer Blocks    │   │
+        │  │    - Multi-Head Attention   │   │
+        │  │    - MLP (768 → 3072 → 768) │   │
+        │  │  + Layer Normalization      │   │
+        │  └─────────────────────────────┘   │
+        └──────────────┬──────────────────────┘
+                       │
+                       ▼
+        ┌─────────────────────────────────────┐
+        │        CNN DECODER (U-Net)          │
+        │  ┌─────────────────────────────┐   │
+        │  │ Up 1: 256ch @ 1/16 ◄── Skip3│   │
+        │  └─────────────────────────────┘   │
+        │  ┌─────────────────────────────┐   │
+        │  │ Up 2: 128ch @ 1/8  ◄── Skip2│   │
+        │  └─────────────────────────────┘   │
+        │  ┌─────────────────────────────┐   │
+        │  │ Up 3: 64ch  @ 1/4  ◄── Skip1│   │
+        │  └─────────────────────────────┘   │
+        │  ┌─────────────────────────────┐   │
+        │  │ Up 4: 64ch  @ 1/1           │   │
+        │  └─────────────────────────────┘   │
+        └──────────────┬──────────────────────┘
+                       │
+                       ▼
+        ┌─────────────────────────────────────┐
+        │     SEGMENTATION HEAD (1×1 Conv)    │
+        │       64 channels → 2 classes       │
+        └──────────────┬──────────────────────┘
+                       │
+                       ▼
+                Segmentation Map
+               (2 × 224 × 224)
+          [Background | Pancreas]
+```
+
+## Key Components:
+
+1. **CNN Encoder**: ResNet-style backbone extracting hierarchical features at multiple scales
+2. **Transformer Bottleneck**: 12-layer ViT capturing global context via self-attention
+3. **CNN Decoder**: U-Net architecture with skip connections for spatial recovery
+4. **Hybrid Design**: Combines local (CNN) and global (Transformer) feature learning
+
+## Model Variants:
+
+| Variant | Embed Dim | Heads | Layers | Params |
+|---------|-----------|-------|--------|--------|
+| Small   | 384       | 6     | 6      | 17M    |
+| Base    | 768       | 12    | 12     | 105M   |
+| Large   | 1024      | 16    | 24     | 300M   |
+
+---
+
+**Note:** For production documentation, create a professional diagram using:
+- Draw.io (https://draw.io)
+- Figma
+- PowerPoint/Keynote
+- Python (matplotlib/plotly)
