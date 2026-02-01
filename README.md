@@ -11,18 +11,20 @@
 
 TransUNet is a hybrid deep learning architecture combining **CNN encoders** with **Vision Transformers** for medical image segmentation. This implementation focuses on automated pancreas segmentation from CT scans using the Medical Segmentation Decathlon dataset.
 
-![TransUNet Architecture](assets/architecture_diagram.png)
+![TransUNet Architecture](paper/TransUNet-Architecture_overview.png)
 
 ## Overview
 
 Pancreas segmentation from CT imaging is challenging due to:
+
 - **Small organ size** (<1% of scan volume)
 - **Variable shape** across patients
 - **Low contrast** with surrounding soft tissue
 
 TransUNet addresses these challenges through:
+
 - ✅ Multi-scale CNN feature extraction
-- ✅ Global context modeling via transformer self-attention  
+- ✅ Global context modeling via transformer self-attention
 - ✅ U-Net decoder with skip connections for precise localization
 - ✅ Hybrid loss (Dice + Cross-Entropy) for class imbalance
 
@@ -51,10 +53,10 @@ Input CT (224×224) → CNN Encoder → Transformer → CNN Decoder → Segmenta
 ### Model Variants
 
 | Variant | Embed Dim | Heads | Layers | Parameters | Memory |
-|---------|-----------|-------|--------|-----------|---------|
-| Small   | 384       | 6     | 6      | 17M       | ~4GB    |
-| Base    | 768       | 12    | 12     | 105M      | ~12GB   |
-| Large   | 1024      | 16    | 24     | 300M      | ~24GB   |
+| ------- | --------- | ----- | ------ | ---------- | ------ |
+| Small   | 384       | 6     | 6      | 17M        | ~4GB   |
+| Base    | 768       | 12    | 12     | 105M       | ~12GB  |
+| Large   | 1024      | 16    | 24     | 300M       | ~24GB  |
 
 ---
 
@@ -62,15 +64,15 @@ Input CT (224×224) → CNN Encoder → Transformer → CNN Decoder → Segmenta
 
 **Medical Segmentation Decathlon - Task07 Pancreas**
 
-| Attribute | Details |
-|-----------|---------|
-| **Volumes** | 420 CT scans (282 train, 139 test) |
-| **Modality** | Portal venous phase CT |
-| **Labels** | Background (0), Pancreas (1), Tumor (2) |
-| **Format** | NIfTI compressed (`.nii.gz`) |
-| **Size** | ~11.4GB (compressed) |
-| **Source** | Memorial Sloan Kettering Cancer Center |
-| **License** | [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| Attribute    | Details                                                         |
+| ------------ | --------------------------------------------------------------- |
+| **Volumes**  | 420 CT scans (282 train, 139 test)                              |
+| **Modality** | Portal venous phase CT                                          |
+| **Labels**   | Background (0), Pancreas (1), Tumor (2)                         |
+| **Format**   | NIfTI compressed (`.nii.gz`)                                    |
+| **Size**     | ~11.4GB (compressed)                                            |
+| **Source**   | Memorial Sloan Kettering Cancer Center                          |
+| **License**  | [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
 
 Dataset is auto-downloaded via `monai.apps.download_and_extract` in Notebook 01.
 
@@ -81,11 +83,13 @@ Dataset is auto-downloaded via `monai.apps.download_and_extract` in Notebook 01.
 ### Prerequisites
 
 **Hardware Requirements:**
+
 - CUDA-capable GPU (recommended for training)
 - 8GB+ VRAM for base variant, 4GB for small variant
 - 16GB+ system RAM
 
 **Software Requirements:**
+
 - Python 3.9+
 - CUDA 11.8+ (for GPU acceleration)
 
@@ -105,6 +109,7 @@ source .venv/bin/activate  # Linux/macOS
 ```
 
 **Dependencies** (managed via `pyproject.toml`):
+
 - `torch>=2.0.0` - Deep learning framework
 - `monai>=1.3.0` - Medical imaging toolkit
 - `nibabel>=5.0.0` - NIfTI file I/O
@@ -177,33 +182,40 @@ TransUNet-Pancreas-Segmentation/
 The project is organized into 4 self-contained Jupyter notebooks:
 
 #### 📓 Notebook 01: Data Exploration & Processing
+
 ```bash
 jupyter notebook notebooks/01_Data_Exploration_and_Processing.ipynb
 ```
+
 - Downloads MSD Task07 Pancreas dataset (~11.4GB)
 - Creates 80/10/10 train/val/test splits
 - Defines MONAI preprocessing pipeline
 - Visualizes CT volumes with segmentation masks
 
 #### 📓 Notebook 02: Model Architecture
+
 ```bash
 jupyter notebook notebooks/02_Model_Architecture.ipynb
 ```
+
 - TransUNet component-by-component explanation
 - Multi-head attention visualization
 - Forward pass verification
 - Parameter count analysis
 
 #### 📓 Notebook 03: Training Pipeline
+
 ```bash
 jupyter notebook notebooks/03_Training_Pipeline.ipynb
 ```
+
 - SlicingDataset for 2D slice extraction
 - Hybrid loss (Dice + CrossEntropy)
 - Training loop with validation
 - Model checkpointing
 
 **Training Configuration:**
+
 ```python
 CONFIG = {
     "model_variant": "small",     # or "base", "large"
@@ -215,9 +227,11 @@ CONFIG = {
 ```
 
 #### 📓 Notebook 04: Evaluation & Demo
+
 ```bash
 jupyter notebook notebooks/04_Evaluation_and_Demo.ipynb
 ```
+
 - Load trained checkpoints
 - 3D volume inference (slice-by-slice)
 - Dice score & Hausdorff distance metrics
@@ -245,6 +259,7 @@ python main.py inference \
 ```
 
 **Options:**
+
 - `--variant`: Model size (`small` | `base` | `large`)
 - `--batch-size`: Training batch size (default: 8)
 - `--epochs`: Number of training epochs (default: 50)
@@ -285,14 +300,14 @@ with torch.no_grad():
 
 MONAI-based preprocessing ensures consistent data formatting:
 
-| Step | Transform | Purpose |
-|------|-----------|---------|
-| 1 | `LoadImaged` | Load NIfTI files |
-| 2 | `EnsureChannelFirstd` | Add channel dimension |
-| 3 | `Orientationd` | Standardize to RAS orientation |
-| 4 | `Spacingd` | Resample to 1.0mm isotropic |
-| 5 | `ScaleIntensityRanged` | HU windowing [-175, 250] → [0, 1] |
-| 6 | `CropForegroundd` | Remove empty background |
+| Step | Transform              | Purpose                           |
+| ---- | ---------------------- | --------------------------------- |
+| 1    | `LoadImaged`           | Load NIfTI files                  |
+| 2    | `EnsureChannelFirstd`  | Add channel dimension             |
+| 3    | `Orientationd`         | Standardize to RAS orientation    |
+| 4    | `Spacingd`             | Resample to 1.0mm isotropic       |
+| 5    | `ScaleIntensityRanged` | HU windowing [-175, 250] → [0, 1] |
+| 6    | `CropForegroundd`      | Remove empty background           |
 
 **HU Windowing:** Focuses on soft tissue (pancreas, liver, kidneys) while suppressing bone and air.
 
@@ -315,13 +330,13 @@ Total Loss = 0.5 × Dice Loss + 0.5 × Cross-Entropy Loss
 
 Based on TransUNet paper benchmarks:
 
-| Metric | Expected Range |
-|--------|----------------|
-| **Dice Score** | 0.75 - 0.85 |
-| **Hausdorff Distance (95%)** | 5 - 15 mm |
-| **Inference Time** | ~2-3 sec/slice (GPU) |
+| Metric                       | Expected Range       |
+| ---------------------------- | -------------------- |
+| **Dice Score**               | 0.75 - 0.85          |
+| **Hausdorff Distance (95%)** | 5 - 15 mm            |
+| **Inference Time**           | ~2-3 sec/slice (GPU) |
 
-*Performance varies with model variant and GPU hardware.*
+_Performance varies with model variant and GPU hardware._
 
 ---
 
